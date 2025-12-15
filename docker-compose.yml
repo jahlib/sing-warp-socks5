@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  sing-box:
+    build: .
+    container_name: sing-box-warp
+    restart: unless-stopped
+    ports:
+      - "2080:2080"
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=0
+    volumes:
+      - ./warp.conf:/app/warp.conf:ro
+      - warp-cache:/app/.cache
+    networks:
+      - sing-box-network
+
+volumes:
+  warp-cache:
+
+networks:
+  sing-box-network:
+    driver: bridge
