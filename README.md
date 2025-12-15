@@ -17,6 +17,8 @@ Docker проект для запуска sing-box с WARP конфигурац�
 
 ## Формат warp.conf
 
+Возьмите на странице [Warp-Generator](https://warp-generator.github.io/warp/) конфиг для Throne и вставьте его в warp.conf как есть
+
 ```
 wg://SERVER:PORT?private_key=...&junk_packet_count=4&junk_packet_min_size=40&...#WARP
 ```
