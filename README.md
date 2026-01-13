@@ -37,7 +37,7 @@ docker-compose down
 ```
 
 ## (Alternative) Установка как systemd service без docker!
-
+Создавать warp.conf не нужно, скрипт сам спросит скопированный ws:// на ввод
 ```
 curl -fsSL https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/quick-install.sh | sudo bash
 ```
