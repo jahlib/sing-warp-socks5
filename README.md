@@ -23,7 +23,7 @@ Docker проект для запуска sing-box с WARP конфигурац�
 wg://SERVER:PORT?private_key=...&junk_packet_count=4&junk_packet_min_size=40&...#WARP
 ```
 
-## Запуск
+## Запуск Docker-Compose
 
 ```bash
 # Собрать и запустить
@@ -34,6 +34,12 @@ docker-compose logs -f
 
 # Остановить
 docker-compose down
+```
+
+## (Alternative) Установка systemd service
+
+```
+curl -fsSL https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/quick-install.sh | sudo bash
 ```
 
 ## Использование
