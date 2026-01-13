@@ -36,7 +36,7 @@ docker-compose logs -f
 docker-compose down
 ```
 
-## (Alternative) Установка systemd service
+## (Alternative) Установка как systemd service без docker!
 
 ```
 curl -fsSL https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/quick-install.sh | sudo bash
