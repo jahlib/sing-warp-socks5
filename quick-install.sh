@@ -23,16 +23,14 @@ mkdir -p "$CACHE_DIR"
 
 echo ""
 echo "=== WARP Configuration ==="
-echo "Please paste your warp.conf content (wg:// URL)"
-echo "Press Ctrl+D when done:"
-echo ""
+read -p "Enter your warp.conf URL (wg://...): " WARP_URL
 
-cat > "$CONFIG_DIR/warp.conf"
-
-if [ ! -s "$CONFIG_DIR/warp.conf" ]; then
-    echo "Error: warp.conf is empty!"
+if [ -z "$WARP_URL" ]; then
+    echo "Error: warp.conf URL is empty!"
     exit 1
 fi
+
+echo "$WARP_URL" > "$CONFIG_DIR/warp.conf"
 
 echo ""
 echo "Configuration saved to $CONFIG_DIR/warp.conf"
