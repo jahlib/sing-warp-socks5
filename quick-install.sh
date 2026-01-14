@@ -23,7 +23,7 @@ mkdir -p "$CACHE_DIR"
 
 echo ""
 echo "=== WARP Configuration ==="
-read -p "Enter your warp.conf URL (wg://...): " WARP_URL
+read -p "Enter your warp.conf URL (wg://...): " WARP_URL < /dev/tty
 
 if [ -z "$WARP_URL" ]; then
     echo "Error: warp.conf URL is empty!"
@@ -249,7 +249,7 @@ echo ""
 echo "SOCKS5 proxy: localhost:2080"
 echo ""
 
-read -p "Start service now? (y/n) " -n 1 -r
+read -p "Start service now? (y/n) " -n 1 -r < /dev/tty
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     systemctl enable sing-box-warp
