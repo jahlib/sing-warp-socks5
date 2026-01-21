@@ -30,13 +30,13 @@ wg://SERVER:PORT?private_key=...&junk_packet_count=4&junk_packet_min_size=40&...
 
 ```bash
 # Собрать и запустить
-docker-compose up -d
+docker compose up -d
 
 # Просмотр логов
-docker-compose logs -f
+docker compose logs -f
 
 # Остановить
-docker-compose down
+docker compose down -v
 ```
 
 ## (Alternative) Установка как systemd service без docker!
