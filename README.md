@@ -51,7 +51,7 @@ SOCKS5 прокси доступен на `localhost:2080` без авториз
 
 Пример использования:
 ```bash
-curl --proxy socks5://localhost:2080 https://ifconfig.me
+curl --proxy socks5://localhost:2080 ip-api.com
 ```
 
 ## Обновление конфигурации
