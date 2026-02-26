@@ -21,6 +21,7 @@
 ## Формат warp.conf
 
 Возьмите на странице [Warp-Generator](https://warp-generator.github.io/warp/) конфиг для Throne и вставьте его в warp.conf как есть
+
 UPD: теперь у них для throne в telegram генерация. С альтернативным endpoint.
 
 ```
