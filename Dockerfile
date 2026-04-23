@@ -7,11 +7,11 @@ RUN apk add --no-cache wget tar ca-certificates
 WORKDIR /app
 
 # Download and extract sing-box
-RUN wget https://github.com/shtorm-7/sing-box-extended/releases/download/v1.12.12-extended-1.5.1/sing-box-1.12.12-extended-1.5.1-linux-amd64.tar.gz && \
-    tar -xzf sing-box-1.12.12-extended-1.5.1-linux-amd64.tar.gz && \
-    mv sing-box-1.12.12-extended-1.5.1-linux-amd64/sing-box /usr/local/bin/sing-box && \
+RUN wget https://github.com/shtorm-7/sing-box-extended/releases/download/v1.13.2-extended-1.6.2/sing-box-1.13.2-extended-1.6.2-linux-amd64.tar.gz && \
+    tar -xzf sing-box-1.13.2-extended-1.6.2-linux-amd64.tar.gz && \
+    mv sing-box-1.13.2-extended-1.6.2-linux-amd64/sing-box /usr/local/bin/sing-box && \
     chmod +x /usr/local/bin/sing-box && \
-    rm -rf sing-box-1.12.12-extended-1.5.1-linux-amd64.tar.gz sing-box-1.12.12-extended-1.5.1-linux-amd64
+    rm -rf sing-box-1.13.2-extended-1.6.2-linux-amd64.tar.gz sing-box-1.13.2-extended-1.6.2-linux-amd64
 
 # Copy configuration generator script
 COPY generate-config.sh /app/generate-config.sh
