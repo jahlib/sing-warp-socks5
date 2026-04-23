@@ -5,7 +5,7 @@ set -e
 INSTALL_DIR="/opt/sing-box-warp"
 CONFIG_DIR="/etc/sing-box-warp"
 CACHE_DIR="/var/cache/sing-box-warp"
-SING_BOX_VERSION="1.12.12-extended-1.5.1"
+SING_BOX_VERSION="v1.13.2-extended-1.6.2"
 SING_BOX_URL="https://github.com/shtorm-7/sing-box-extended/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
 
 echo "=== Sing-Box WARP Quick Installer ==="
@@ -23,14 +23,17 @@ mkdir -p "$CACHE_DIR"
 
 echo ""
 echo "=== WARP Configuration ==="
-read -p "Enter your warp.conf URL (wg://...): " WARP_URL < /dev/tty
+echo "Paste your WireGuard config (press Ctrl+D when done):"
+echo ""
 
-if [ -z "$WARP_URL" ]; then
-    echo "Error: warp.conf URL is empty!"
+WARP_CONFIG=$(cat < /dev/tty)
+
+if [ -z "$WARP_CONFIG" ]; then
+    echo "Error: Configuration is empty!"
     exit 1
 fi
 
-echo "$WARP_URL" > "$CONFIG_DIR/warp.conf"
+echo "$WARP_CONFIG" > "$CONFIG_DIR/warp.conf"
 
 echo ""
 echo "Configuration saved to $CONFIG_DIR/warp.conf"
@@ -51,49 +54,68 @@ cat > "$INSTALL_DIR/generate-config.sh" <<"'GENERATE_CONFIG_EOF'"
 WARP_CONF="${WARP_CONF:-/etc/sing-box-warp/warp.conf}"
 OUTPUT_CONFIG="${OUTPUT_CONFIG:-/opt/sing-box-warp/config.json}"
 
-urldecode() {
-    echo "$1" | sed 's/%3D/=/g; s/%2B/+/g; s/%2F/\//g'
-}
-
-get_param() {
-    local url="$1"
-    local param="$2"
-    echo "$url" | sed -n "s/.*[?&]${param}=\([^&#]*\).*/\1/p"
+get_config_value() {
+    local file="$1"
+    local key="$2"
+    grep "^${key}" "$file" | head -1 | sed "s/^${key}[[:space:]]*=[[:space:]]*//" | tr -d '\r'
 }
 
 parse_warp_conf() {
     WG_URL=$(grep "^wg://" "$WARP_CONF" | head -1)
     
-    if [ -z "$WG_URL" ]; then
-        echo "Error: No wg:// URL found in $WARP_CONF"
+    if [ -n "$WG_URL" ]; then
+        echo "Error: Old wg:// URL format detected. Please use WireGuard config format instead."
         exit 1
     fi
     
-    SERVER=$(echo "$WG_URL" | sed 's|wg://\([^:]*\):.*|\1|')
-    PORT=$(echo "$WG_URL" | sed 's|wg://[^:]*:\([0-9]*\)?.*|\1|')
+    PRIVATE_KEY=$(get_config_value "$WARP_CONF" "PrivateKey")
+    ADDRESS=$(get_config_value "$WARP_CONF" "Address")
+    MTU=$(get_config_value "$WARP_CONF" "MTU")
     
-    PRIVATE_KEY=$(urldecode "$(get_param "$WG_URL" "private_key")")
-    PUBLIC_KEY=$(urldecode "$(get_param "$WG_URL" "peer_public_key")")
-    RESERVED=$(get_param "$WG_URL" "reserved")
-    MTU=$(get_param "$WG_URL" "mtu")
-    LOCAL_ADDRESS=$(get_param "$WG_URL" "local_address")
+    S1=$(get_config_value "$WARP_CONF" "S1")
+    S2=$(get_config_value "$WARP_CONF" "S2")
+    S3=$(get_config_value "$WARP_CONF" "S3")
+    S4=$(get_config_value "$WARP_CONF" "S4")
     
-    Jc=$(get_param "$WG_URL" "junk_packet_count")
-    Jmin=$(get_param "$WG_URL" "junk_packet_min_size")
-    Jmax=$(get_param "$WG_URL" "junk_packet_max_size")
-    H1=$(get_param "$WG_URL" "init_packet_magic_header")
-    H2=$(get_param "$WG_URL" "response_packet_magic_header")
-    H3=$(get_param "$WG_URL" "underload_packet_magic_header")
-    H4=$(get_param "$WG_URL" "transport_packet_magic_header")
-    INIT_JUNK=$(get_param "$WG_URL" "init_packet_junk_size")
-    RESP_JUNK=$(get_param "$WG_URL" "response_packet_junk_size")
+    Jc=$(get_config_value "$WARP_CONF" "Jc")
+    Jmin=$(get_config_value "$WARP_CONF" "Jmin")
+    Jmax=$(get_config_value "$WARP_CONF" "Jmax")
     
-    S1=$(echo "$RESERVED" | cut -d'-' -f1)
-    S2=$(echo "$RESERVED" | cut -d'-' -f2)
-    S3=$(echo "$RESERVED" | cut -d'-' -f3)
+    H1=$(get_config_value "$WARP_CONF" "H1")
+    H2=$(get_config_value "$WARP_CONF" "H2")
+    H3=$(get_config_value "$WARP_CONF" "H3")
+    H4=$(get_config_value "$WARP_CONF" "H4")
     
-    IPV4=$(echo "$LOCAL_ADDRESS" | cut -d'-' -f1)
-    IPV6=$(echo "$LOCAL_ADDRESS" | cut -d'-' -f2-)
+    I1=$(get_config_value "$WARP_CONF" "I1")
+    I2=$(get_config_value "$WARP_CONF" "I2")
+    
+    PUBLIC_KEY=$(get_config_value "$WARP_CONF" "PublicKey")
+    ENDPOINT=$(get_config_value "$WARP_CONF" "Endpoint")
+    
+    SERVER=$(echo "$ENDPOINT" | cut -d':' -f1)
+    PORT=$(echo "$ENDPOINT" | cut -d':' -f2)
+    
+    IPV4=$(echo "$ADDRESS" | tr ',' '\n' | grep -v ':' | head -1 | tr -d ' ')
+    IPV6=$(echo "$ADDRESS" | tr ',' '\n' | grep ':' | head -1 | tr -d ' ')
+    
+    if [ -z "$IPV6" ]; then
+        IPV6="2606:4700:110:8b6d:3808:7d65:ef2f:cc5d/128"
+    fi
+    
+    if [ -z "$PRIVATE_KEY" ]; then
+        echo "Error: PrivateKey not found in config"
+        exit 1
+    fi
+    
+    if [ -z "$PUBLIC_KEY" ]; then
+        echo "Error: PublicKey not found in config"
+        exit 1
+    fi
+    
+    if [ -z "$ENDPOINT" ]; then
+        echo "Error: Endpoint not found in config"
+        exit 1
+    fi
     
     MTU=${MTU:-1280}
     Jc=${Jc:-4}
@@ -103,8 +125,6 @@ parse_warp_conf() {
     H2=${H2:-2}
     H3=${H3:-3}
     H4=${H4:-4}
-    INIT_JUNK=${INIT_JUNK:-0}
-    RESP_JUNK=${RESP_JUNK:-0}
     S1=${S1:-0}
     S2=${S2:-0}
     S3=${S3:-0}
