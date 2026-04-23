@@ -9,24 +9,55 @@
 
 - `Dockerfile` - образ с sing-box
 - `docker-compose.yml` - оркестрация контейнера
-- `generate-config.sh` - генератор конфига из wg:// URL
-- `warp.conf` - WARP ключ в формате wg:// URL
+- `generate-config.sh` - генератор конфига из WireGuard AWG2.0 формата
+- `warp.conf` - WARP конфигурация в формате WireGuard AWG2.0
 
 ## Как это работает
 
-1. Положите ваш WARP ключ в формат `wg://` URL в файл `warp.conf`
-2. При запуске контейнера `generate-config.sh` парсит ключ и генерирует `config.json`
+1. Положите ваш WARP конфиг в формате AWG2.0 в файл `warp.conf`
+2. При запуске контейнера `generate-config.sh` парсит конфиг и генерирует `config.json`
 3. SOCKS5 прокси поднимается на порту 2080
 
 ## Формат warp.conf
 
-Возьмите на странице [Warp-Generator](https://warp-generator.github.io/warp/) конфиг для Throne и вставьте его в warp.conf как есть
+Вставьте WireGuard конфигурацию в файл `warp.conf`:
 
-UPD: теперь у них для throne в telegram генерация. С альтернативным endpoint.
+```AWG2.0
+[Interface]
+PrivateKey = {somethinghere}
+Address = 172.16.0.2
+DNS = 8.8.8.8, 8.8.4.4	
+MTU = 1280
+S1 = 0
+S2 = 0
+S3 = 0
+S4 = 0
+Jc = 4
+Jmin = 40
+Jmax = 70
+H1 = 1
+H2 = 2
+H3 = 3
+H4 = 4
+I1 = {somethinghere}
+I2 = {somethinghere}
 
+[Peer]
+PublicKey = {somethinghere}
+AllowedIPs = 0.0.0.0/0
+Endpoint = engage.cloudflareclient.com:880
+PersistentKeepalive = 25
 ```
-wg://SERVER:PORT?private_key=...&junk_packet_count=4&junk_packet_min_size=40&...#WARP
-```
+
+**Параметры:**
+- `PrivateKey` - приватный ключ WireGuard
+- `Address` - локальный IP адрес (IPv4)
+- `MTU` - размер MTU (по умолчанию 1280)
+- `S1-S4` - reserved байты для обфускации (используются первые 3)
+- `Jc, Jmin, Jmax` - параметры Amnezia для junk пакетов
+- `H1-H4` - magic headers для обфускации
+- `PublicKey` - публичный ключ сервера
+- `Endpoint` - адрес и порт сервера
 
 ## Запуск Docker-Compose
 
@@ -42,7 +73,7 @@ docker compose down -v
 ```
 
 ## (Alternative) Установка как systemd service без docker!
-Создавать warp.conf не нужно, скрипт сам спросит скопированный ws:// на ввод
+Скрипт попросит вставить WireGuard конфигурацию при установке
 ```
 curl -fsSL https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/quick-install.sh | sudo bash
 ```
