@@ -3,58 +3,82 @@
 WARP_CONF="/app/warp.conf"
 OUTPUT_CONFIG="/app/config.json"
 
-# URL decode function - only decode %3D to = for base64
-urldecode() {
-    echo "$1" | sed 's/%3D/=/g; s/%2B/+/g; s/%2F/\//g'
-}
-
-# Extract parameter from URL
-get_param() {
-    local url="$1"
-    local param="$2"
-    echo "$url" | sed -n "s/.*[?&]${param}=\([^&#]*\).*/\1/p"
+# Extract value from WireGuard config format
+get_config_value() {
+    local file="$1"
+    local key="$2"
+    grep "^${key}" "$file" | head -1 | sed "s/^${key}[[:space:]]*=[[:space:]]*//" | tr -d '\r'
 }
 
 # Parse warp.conf
 parse_warp_conf() {
-    # Read the wg:// URL from file
+    # Check if it's old wg:// URL format
     WG_URL=$(grep "^wg://" "$WARP_CONF" | head -1)
     
-    if [ -z "$WG_URL" ]; then
-        echo "Error: No wg:// URL found in $WARP_CONF"
+    if [ -n "$WG_URL" ]; then
+        echo "Error: Old wg:// URL format detected. Please use WireGuard config format instead."
+        echo "See README.md for the new format."
         exit 1
     fi
     
-    # Extract server and port from wg://SERVER:PORT?...
-    SERVER=$(echo "$WG_URL" | sed 's|wg://\([^:]*\):.*|\1|')
-    PORT=$(echo "$WG_URL" | sed 's|wg://[^:]*:\([0-9]*\)?.*|\1|')
+    # Parse WireGuard config format
+    PRIVATE_KEY=$(get_config_value "$WARP_CONF" "PrivateKey")
+    ADDRESS=$(get_config_value "$WARP_CONF" "Address")
+    MTU=$(get_config_value "$WARP_CONF" "MTU")
     
-    # Extract parameters
-    PRIVATE_KEY=$(urldecode "$(get_param "$WG_URL" "private_key")")
-    PUBLIC_KEY=$(urldecode "$(get_param "$WG_URL" "peer_public_key")")
-    RESERVED=$(get_param "$WG_URL" "reserved")
-    MTU=$(get_param "$WG_URL" "mtu")
-    LOCAL_ADDRESS=$(get_param "$WG_URL" "local_address")
+    # Reserved bytes (S1-S4, но используем только первые 3)
+    S1=$(get_config_value "$WARP_CONF" "S1")
+    S2=$(get_config_value "$WARP_CONF" "S2")
+    S3=$(get_config_value "$WARP_CONF" "S3")
+    S4=$(get_config_value "$WARP_CONF" "S4")
     
-    # Amnezia parameters
-    Jc=$(get_param "$WG_URL" "junk_packet_count")
-    Jmin=$(get_param "$WG_URL" "junk_packet_min_size")
-    Jmax=$(get_param "$WG_URL" "junk_packet_max_size")
-    H1=$(get_param "$WG_URL" "init_packet_magic_header")
-    H2=$(get_param "$WG_URL" "response_packet_magic_header")
-    H3=$(get_param "$WG_URL" "underload_packet_magic_header")
-    H4=$(get_param "$WG_URL" "transport_packet_magic_header")
-    INIT_JUNK=$(get_param "$WG_URL" "init_packet_junk_size")
-    RESP_JUNK=$(get_param "$WG_URL" "response_packet_junk_size")
+    # Amnezia junk parameters
+    Jc=$(get_config_value "$WARP_CONF" "Jc")
+    Jmin=$(get_config_value "$WARP_CONF" "Jmin")
+    Jmax=$(get_config_value "$WARP_CONF" "Jmax")
     
-    # Parse reserved (format: 131-184-249)
-    S1=$(echo "$RESERVED" | cut -d'-' -f1)
-    S2=$(echo "$RESERVED" | cut -d'-' -f2)
-    S3=$(echo "$RESERVED" | cut -d'-' -f3)
+    # Magic headers
+    H1=$(get_config_value "$WARP_CONF" "H1")
+    H2=$(get_config_value "$WARP_CONF" "H2")
+    H3=$(get_config_value "$WARP_CONF" "H3")
+    H4=$(get_config_value "$WARP_CONF" "H4")
     
-    # Parse local addresses (format: 172.16.0.2/32-2606:4700:110:8b6d:3808:7d65:ef2f:cc5d/128)
-    IPV4=$(echo "$LOCAL_ADDRESS" | cut -d'-' -f1)
-    IPV6=$(echo "$LOCAL_ADDRESS" | cut -d'-' -f2-)
+    # Init/Response packet junk (hex data) - пока не используем
+    I1=$(get_config_value "$WARP_CONF" "I1")
+    I2=$(get_config_value "$WARP_CONF" "I2")
+    
+    # Peer section
+    PUBLIC_KEY=$(get_config_value "$WARP_CONF" "PublicKey")
+    ENDPOINT=$(get_config_value "$WARP_CONF" "Endpoint")
+    
+    # Parse endpoint (format: host:port)
+    SERVER=$(echo "$ENDPOINT" | cut -d':' -f1)
+    PORT=$(echo "$ENDPOINT" | cut -d':' -f2)
+    
+    # Parse address - может быть несколько через запятую, берем первый IPv4
+    IPV4=$(echo "$ADDRESS" | tr ',' '\n' | grep -v ':' | head -1 | tr -d ' ')
+    IPV6=$(echo "$ADDRESS" | tr ',' '\n' | grep ':' | head -1 | tr -d ' ')
+    
+    # Если IPv6 не найден, генерируем дефолтный
+    if [ -z "$IPV6" ]; then
+        IPV6="2606:4700:110:8b6d:3808:7d65:ef2f:cc5d/128"
+    fi
+    
+    # Validation
+    if [ -z "$PRIVATE_KEY" ]; then
+        echo "Error: PrivateKey not found in config"
+        exit 1
+    fi
+    
+    if [ -z "$PUBLIC_KEY" ]; then
+        echo "Error: PublicKey not found in config"
+        exit 1
+    fi
+    
+    if [ -z "$ENDPOINT" ]; then
+        echo "Error: Endpoint not found in config"
+        exit 1
+    fi
     
     # Set defaults if empty
     MTU=${MTU:-1280}
@@ -65,8 +89,6 @@ parse_warp_conf() {
     H2=${H2:-2}
     H3=${H3:-3}
     H4=${H4:-4}
-    INIT_JUNK=${INIT_JUNK:-0}
-    RESP_JUNK=${RESP_JUNK:-0}
     S1=${S1:-0}
     S2=${S2:-0}
     S3=${S3:-0}
