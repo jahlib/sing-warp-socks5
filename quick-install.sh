@@ -60,6 +60,19 @@ get_config_value() {
     grep "^${key}" "$file" | head -1 | sed "s/^${key}[[:space:]]*=[[:space:]]*//" | tr -d '\r'
 }
 
+ensure_prefix() {
+    local addr="$1"
+    local default_prefix="$2"
+    if [ -z "$addr" ]; then
+        echo ""
+        return 0
+    fi
+    case "$addr" in
+        */*) echo "$addr" ;;
+        *) echo "${addr}${default_prefix}" ;;
+    esac
+}
+
 parse_warp_conf() {
     WG_URL=$(grep "^wg://" "$WARP_CONF" | head -1)
     
@@ -97,6 +110,9 @@ parse_warp_conf() {
     
     IPV4=$(echo "$ADDRESS" | tr ',' '\n' | grep -v ':' | head -1 | tr -d ' ')
     IPV6=$(echo "$ADDRESS" | tr ',' '\n' | grep ':' | head -1 | tr -d ' ')
+    
+    IPV4=$(ensure_prefix "$IPV4" "/32")
+    IPV6=$(ensure_prefix "$IPV6" "/128")
     
     if [ -z "$IPV6" ]; then
         IPV6="2606:4700:110:8b6d:3808:7d65:ef2f:cc5d/128"
