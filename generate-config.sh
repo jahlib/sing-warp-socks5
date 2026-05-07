@@ -241,7 +241,8 @@ write_config() {
         "h2": $H2,
         "h3": $H3,
         "h4": $H4$H4_COMMA
-$I1_LINE      }
+$I1_LINE
+      }
     }
   ],
   "inbounds": [
