@@ -23,7 +23,7 @@ mkdir -p "$CACHE_DIR"
 
 echo ""
 echo "=== WARP Configuration ==="
-echo "goto ->> https://generator-warp-config.netlify.app/ generater for throne"
+echo "goto ->> https://warp-generator.github.io/ generater for AWG 3.0"
 echo "Paste your WARP config (wg://... or [Interface]/[Peer] INI)."
 echo "Finish input with Ctrl-D."
 WARP_INPUT=$(cat < /dev/tty)
@@ -40,12 +40,26 @@ echo "Configuration saved to $CONFIG_DIR/warp.conf"
 
 echo ""
 echo "Downloading sing-box..."
-cd /tmp
-wget -q --show-progress "$SING_BOX_URL"
-tar -xzf "sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
-mv "sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/sing-box
-chmod +x /usr/local/bin/sing-box
-rm -rf "sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" "sing-box-${SING_BOX_VERSION}-linux-amd64"
+NEED_DOWNLOAD=1
+
+if command -v sing-box >/dev/null 2>&1; then
+    INSTALLED_VERSION=$(sing-box version 2>/dev/null | head -n 1 || true)
+    if echo "$INSTALLED_VERSION" | grep -q "$SING_BOX_VERSION"; then
+        NEED_DOWNLOAD=0
+        echo "sing-box already installed ($INSTALLED_VERSION), skipping download."
+    else
+        echo "sing-box is installed ($INSTALLED_VERSION) but version mismatch, downloading $SING_BOX_VERSION..."
+    fi
+fi
+
+if [ "$NEED_DOWNLOAD" -eq 1 ]; then
+    cd /tmp
+    wget -q --show-progress "$SING_BOX_URL"
+    tar -xzf "sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
+    mv "sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/sing-box
+    chmod +x /usr/local/bin/sing-box
+    rm -rf "sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" "sing-box-${SING_BOX_VERSION}-linux-amd64"
+fi
 
 echo "Creating generate-config.sh..."
 cat > "$INSTALL_DIR/generate-config.sh" <<"'GENERATE_CONFIG_EOF'"
@@ -289,7 +303,7 @@ write_config() {
         "h2": $H2,
         "h3": $H3,
         "h4": $H4$H4_COMMA
-$I1_LINE      }
+$I1_LINE
       }
     }
   ],
