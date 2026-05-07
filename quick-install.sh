@@ -189,6 +189,7 @@ parse_from_ini() {
                 H3) H3="$value" ;;
                 H4) H4="$value" ;;
                 I1) I1="$value" ;;
+                I2) I2="$value" ;;
             esac
         elif [ "$section" = "Peer" ]; then
             case "$key" in
@@ -241,12 +242,24 @@ parse_from_ini() {
 }
 
 write_config() {
-    if [ -n "$I1" ]; then
+    if [ -n "$I1" ] || [ -n "$I2" ]; then
         H4_COMMA="," 
-        I1_LINE=$(printf '        "i1": "%s"\n' "$I1")
     else
         H4_COMMA=""
+    fi
+
+    if [ -n "$I1" ] && [ -n "$I2" ]; then
+        I1_LINE=$(printf '        "i1": "%s",\n' "$I1")
+        I2_LINE=$(printf '        "i2": "%s"\n' "$I2")
+    elif [ -n "$I1" ]; then
+        I1_LINE=$(printf '        "i1": "%s"\n' "$I1")
+        I2_LINE=""
+    elif [ -n "$I2" ]; then
         I1_LINE=""
+        I2_LINE=$(printf '        "i2": "%s"\n' "$I2")
+    else
+        I1_LINE=""
+        I2_LINE=""
     fi
 
     cat > "$OUTPUT_CONFIG" <<EOF
@@ -304,6 +317,7 @@ write_config() {
         "h3": $H3,
         "h4": $H4$H4_COMMA
 $I1_LINE
+$I2_LINE
       }
     }
   ],
