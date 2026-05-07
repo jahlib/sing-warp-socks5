@@ -76,6 +76,7 @@ https://warp-generator.github.io/ AWG 3.0
 ```
 curl -fsSL https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/quick-install.sh | sudo bash
 ```
+После вставки конфига нажмите Enter - ctrl+D
 
 ## Использование
 
