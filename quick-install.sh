@@ -5,7 +5,7 @@ set -e
 INSTALL_DIR="/opt/sing-box-warp"
 CONFIG_DIR="/etc/sing-box-warp"
 CACHE_DIR="/var/cache/sing-box-warp"
-SING_BOX_VERSION="1.13.2-extended-1.6.2"
+SING_BOX_VERSION="1.12.12-extended-1.5.1"
 SING_BOX_URL="https://github.com/shtorm-7/sing-box-extended/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
 
 echo "=== Sing-Box WARP Quick Installer ==="
@@ -23,7 +23,6 @@ mkdir -p "$CACHE_DIR"
 
 echo ""
 echo "=== WARP Configuration ==="
-echo "goto ->> https://generator-warp-config.netlify.app/ generater for throne"
 read -p "Enter your warp.conf URL (wg://...): " WARP_URL < /dev/tty
 
 if [ -z "$WARP_URL" ]; then
@@ -218,7 +217,7 @@ Type=simple
 User=root
 WorkingDirectory=/opt/sing-box-warp
 Environment="HOME=/var/cache/sing-box-warp"
-Environment="WARP_CONF=/opt/sing-box-warp/warp.conf"
+Environment="WARP_CONF=/etc/sing-box-warp/warp.conf"
 Environment="OUTPUT_CONFIG=/opt/sing-box-warp/config.json"
 ExecStartPre=/opt/sing-box-warp/generate-config.sh
 ExecStart=/usr/local/bin/sing-box run -c /opt/sing-box-warp/config.json
