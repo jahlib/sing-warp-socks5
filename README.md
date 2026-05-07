@@ -9,12 +9,12 @@
 
 - `Dockerfile` - образ с sing-box
 - `docker-compose.yml` - оркестрация контейнера
-- `generate-config.sh` - генератор конфига из WireGuard AWG2.0 формата
-- `warp.conf` - WARP конфигурация в формате WireGuard AWG2.0
+- `generate-config.sh` - генератор конфига из WireGuard AWG3.0 формата
+- `warp.conf` - WARP конфигурация в формате WireGuard AWG3.0
 
 ## Как это работает
 
-1. Положите ваш WARP конфиг в формате AWG2.0 в файл `warp.conf`
+1. Положите ваш WARP конфиг в формате AWG3.0 в файл `warp.conf`
 2. При запуске контейнера `generate-config.sh` парсит конфиг и генерирует `config.json`
 3. SOCKS5 прокси поднимается на порту 2080
 
@@ -22,8 +22,28 @@
 
 Вставьте WireGuard конфигурацию в файл `warp.conf`:
 
-```AWG2.0
-wg://162.159.192.1:500?private_key=key&peer_public_key=pubkey&pre_shared_key=&reserved=112-103-154&persistent_keepalive=0&mtu=1280&use_system_interface=false&local_address=172.16.0.2/32-2606:4700:110:8f05:fa00:8aff:48e2:9b49/128&workers=0&enable_amnezia=true&junk_packet_count=4&junk_packet_min_size=40&junk_packet_max_size=70&init_packet_junk_size=0&response_packet_junk_size=0&init_packet_magic_header=1&response_packet_magic_header=2&underload_packet_magic_header=3&transport_packet_magic_header=4#WARP
+```AWG3.0
+[Interface]
+PrivateKey = {privkey}
+Address = 172.16.0.2, 2606:4700:110:890e:48c0:b073:6ebe:d347
+DNS = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001
+MTU = 1280
+S1 = 0
+S2 = 0
+Jc = 4
+Jmin = 40
+Jmax = 70
+H1 = 1
+H2 = 2
+H3 = 3
+H4 = 4
+I1 = {string}
+
+[Peer]
+PublicKey = {pubkey}
+AllowedIPs = 0.0.0.0/0, ::/0
+Endpoint = engage.cloudflareclient.com:2408
+PersistentKeepalive = 25
 ```
 
 **Параметры:**
@@ -51,7 +71,7 @@ docker compose down -v
 
 ## (Alternative) Установка как systemd service без docker!
 Скрипт попросит вставить WireGuard конфигурацию при установке
-https://generator-warp-config.netlify.app/ - для throne
+https://warp-generator.github.io/ AWG 3.0
 
 ```
 curl -fsSL https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/quick-install.sh | sudo bash
