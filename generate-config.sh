@@ -3,97 +3,67 @@
 WARP_CONF="/app/warp.conf"
 OUTPUT_CONFIG="/app/config.json"
 
-# Extract value from WireGuard config format
-get_config_value() {
-    local file="$1"
-    local key="$2"
-    grep "^${key}" "$file" | head -1 | sed "s/^${key}[[:space:]]*=[[:space:]]*//" | tr -d '\r'
+urldecode() {
+    echo "$1" | sed 's/%3[dD]/=/g; s/%2[bB]/+/g; s/%2[fF]/\//g; s/%2[cC]/,/g'
 }
 
-ensure_prefix() {
-    local addr="$1"
-    local default_prefix="$2"
-    if [ -z "$addr" ]; then
-        echo ""
-        return 0
-    fi
-    case "$addr" in
-        */*) echo "$addr" ;;
-        *) echo "${addr}${default_prefix}" ;;
-    esac
+# Extract parameter from URL
+get_param() {
+    local url="$1"
+    local param="$2"
+    echo "$url" | sed -n "s/.*[?&]${param}=\([^&#]*\).*/\1/p"
 }
 
 # Parse warp.conf
 parse_warp_conf() {
-    # Check if it's old wg:// URL format
+    # Read the wg:// URL from file
     WG_URL=$(grep "^wg://" "$WARP_CONF" | head -1)
     
-    if [ -n "$WG_URL" ]; then
-        echo "Error: Old wg:// URL format detected. Please use WireGuard config format instead."
-        echo "See README.md for the new format."
+    if [ -z "$WG_URL" ]; then
+        echo "Error: No wg:// URL found in $WARP_CONF"
         exit 1
     fi
     
-    # Parse WireGuard config format
-    PRIVATE_KEY=$(get_config_value "$WARP_CONF" "PrivateKey")
-    ADDRESS=$(get_config_value "$WARP_CONF" "Address")
-    MTU=$(get_config_value "$WARP_CONF" "MTU")
+    # Extract server and port from wg://SERVER:PORT?...
+    SERVER=$(echo "$WG_URL" | sed 's|wg://\([^:]*\):.*|\1|')
+    PORT=$(echo "$WG_URL" | sed 's|wg://[^:]*:\([0-9]*\)?.*|\1|')
     
-    # Reserved bytes (S1-S4, но используем только первые 3)
-    S1=$(get_config_value "$WARP_CONF" "S1")
-    S2=$(get_config_value "$WARP_CONF" "S2")
-    S3=$(get_config_value "$WARP_CONF" "S3")
-    S4=$(get_config_value "$WARP_CONF" "S4")
+    # Extract parameters
+    PRIVATE_KEY=$(urldecode "$(get_param "$WG_URL" "private_key")")
+    PUBLIC_KEY=$(urldecode "$(get_param "$WG_URL" "peer_public_key")")
+    RESERVED=$(urldecode "$(get_param "$WG_URL" "reserved")")
+    MTU=$(get_param "$WG_URL" "mtu")
+    LOCAL_ADDRESS=$(urldecode "$(get_param "$WG_URL" "local_address")")
     
-    # Amnezia junk parameters
-    Jc=$(get_config_value "$WARP_CONF" "Jc")
-    Jmin=$(get_config_value "$WARP_CONF" "Jmin")
-    Jmax=$(get_config_value "$WARP_CONF" "Jmax")
+    # Amnezia parameters
+    Jc=$(get_param "$WG_URL" "junk_packet_count")
+    Jmin=$(get_param "$WG_URL" "junk_packet_min_size")
+    Jmax=$(get_param "$WG_URL" "junk_packet_max_size")
+    H1=$(get_param "$WG_URL" "init_packet_magic_header")
+    H2=$(get_param "$WG_URL" "response_packet_magic_header")
+    H3=$(get_param "$WG_URL" "underload_packet_magic_header")
+    H4=$(get_param "$WG_URL" "transport_packet_magic_header")
+    INIT_JUNK=$(get_param "$WG_URL" "init_packet_junk_size")
+    RESP_JUNK=$(get_param "$WG_URL" "response_packet_junk_size")
     
-    # Magic headers
-    H1=$(get_config_value "$WARP_CONF" "H1")
-    H2=$(get_config_value "$WARP_CONF" "H2")
-    H3=$(get_config_value "$WARP_CONF" "H3")
-    H4=$(get_config_value "$WARP_CONF" "H4")
+    # Parse reserved (formats: 131-184-249 OR 131,184,249)
+    S1=$(echo "$RESERVED" | tr ',-' '\n' | sed -n '1p')
+    S2=$(echo "$RESERVED" | tr ',-' '\n' | sed -n '2p')
+    S3=$(echo "$RESERVED" | tr ',-' '\n' | sed -n '3p')
     
-    # Init/Response packet junk (hex data) - пока не используем
-    I1=$(get_config_value "$WARP_CONF" "I1")
-    I2=$(get_config_value "$WARP_CONF" "I2")
-    
-    # Peer section
-    PUBLIC_KEY=$(get_config_value "$WARP_CONF" "PublicKey")
-    ENDPOINT=$(get_config_value "$WARP_CONF" "Endpoint")
-    
-    # Parse endpoint (format: host:port)
-    SERVER=$(echo "$ENDPOINT" | cut -d':' -f1)
-    PORT=$(echo "$ENDPOINT" | cut -d':' -f2)
-    
-    # Parse address - может быть несколько через запятую, берем первый IPv4
-    IPV4=$(echo "$ADDRESS" | tr ',' '\n' | grep -v ':' | head -1 | tr -d ' ')
-    IPV6=$(echo "$ADDRESS" | tr ',' '\n' | grep ':' | head -1 | tr -d ' ')
+    # Parse local addresses (formats: ipv4-ipv6 OR ipv4,ipv6)
+    IPV4=$(echo "$LOCAL_ADDRESS" | tr ',-' '\n' | sed -n '1p')
+    IPV6=$(echo "$LOCAL_ADDRESS" | tr ',-' '\n' | sed -n '2p')
 
-    IPV4=$(ensure_prefix "$IPV4" "/32")
-    IPV6=$(ensure_prefix "$IPV6" "/128")
-    
-    # Если IPv6 не найден, генерируем дефолтный
-    if [ -z "$IPV6" ]; then
-        IPV6="2606:4700:110:8b6d:3808:7d65:ef2f:cc5d/128"
-    fi
-    
-    # Validation
-    if [ -z "$PRIVATE_KEY" ]; then
-        echo "Error: PrivateKey not found in config"
+    if [ -z "$IPV4" ]; then
+        echo "Error: local_address (IPv4) is empty"
         exit 1
     fi
-    
-    if [ -z "$PUBLIC_KEY" ]; then
-        echo "Error: PublicKey not found in config"
-        exit 1
-    fi
-    
-    if [ -z "$ENDPOINT" ]; then
-        echo "Error: Endpoint not found in config"
-        exit 1
+
+    if [ -n "$IPV6" ]; then
+        ADDRESS_JSON=$(printf '["%s", "%s"]' "$IPV4" "$IPV6")
+    else
+        ADDRESS_JSON=$(printf '["%s"]' "$IPV4")
     fi
     
     # Set defaults if empty
@@ -105,6 +75,8 @@ parse_warp_conf() {
     H2=${H2:-2}
     H3=${H3:-3}
     H4=${H4:-4}
+    INIT_JUNK=${INIT_JUNK:-0}
+    RESP_JUNK=${RESP_JUNK:-0}
     S1=${S1:-0}
     S2=${S2:-0}
     S3=${S3:-0}
@@ -138,10 +110,7 @@ parse_warp_conf() {
       "type": "wireguard",
       "tag": "warp-out",
       "mtu": $MTU,
-      "address": [
-        "$IPV4",
-        "$IPV6"
-      ],
+      "address": $ADDRESS_JSON,
       "private_key": "$PRIVATE_KEY",
       "listen_port": 10000,
       "peers": [
