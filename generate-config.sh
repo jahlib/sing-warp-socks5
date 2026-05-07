@@ -176,7 +176,7 @@ parse_from_ini() {
     fi
 
     TAG="wireguard-out"
-    LOG_LEVEL="debug"
+    LOG_LEVEL="error"
 }
 
 write_config() {
@@ -216,7 +216,7 @@ write_config() {
       {
         "tag": "dns-proxy",
         "type": "tls",
-        "server": "8.8.8.8",
+        "server": "176.32.33.6",
         "detour": "wireguard-out"
       },
       {
