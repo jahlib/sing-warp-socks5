@@ -216,7 +216,7 @@ write_config() {
       {
         "tag": "dns-proxy",
         "type": "tls",
-        "server": "176.32.33.6",
+        "server": "8.8.8.8",
         "detour": "wireguard-out"
       },
       {
