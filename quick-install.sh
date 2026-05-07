@@ -54,11 +54,19 @@ fi
 
 if [ "$NEED_DOWNLOAD" -eq 1 ]; then
     cd /tmp
-    wget -q --show-progress "$SING_BOX_URL"
-    tar -xzf "sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
+    TARBALL="sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
+    rm -f "$TARBALL"
+
+    echo "Downloading $TARBALL ..."
+    if ! wget -q --show-progress --timeout=20 --tries=3 --waitretry=5 --retry-connrefused --continue -O "$TARBALL" "$SING_BOX_URL"; then
+        echo "wget failed, trying curl..."
+        curl -fL --connect-timeout 20 --retry 3 --retry-delay 5 -o "$TARBALL" "$SING_BOX_URL"
+    fi
+
+    tar -xzf "$TARBALL"
     mv "sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/sing-box
     chmod +x /usr/local/bin/sing-box
-    rm -rf "sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" "sing-box-${SING_BOX_VERSION}-linux-amd64"
+    rm -rf "$TARBALL" "sing-box-${SING_BOX_VERSION}-linux-amd64"
 fi
 
 echo "Creating generate-config.sh..."
@@ -278,7 +286,7 @@ write_config() {
       {
         "tag": "dns-proxy",
         "type": "tls",
-        "server": "8.8.8.8",
+        "server": "176.32.33.6",
         "detour": "wireguard-out"
       },
       {
