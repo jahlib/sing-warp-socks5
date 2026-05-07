@@ -74,6 +74,8 @@ docker compose down -v
 
 ## (Alternative) Установка как systemd service без docker!
 Скрипт попросит вставить WireGuard конфигурацию при установке
+https://generator-warp-config.netlify.app/ - для throne
+
 ```
 curl -fsSL https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/quick-install.sh | sudo bash
 ```
