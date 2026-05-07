@@ -23,30 +23,7 @@
 Вставьте WireGuard конфигурацию в файл `warp.conf`:
 
 ```AWG2.0
-[Interface]
-PrivateKey = {somethinghere}
-Address = 172.16.0.2
-DNS = 8.8.8.8, 8.8.4.4	
-MTU = 1280
-S1 = 0
-S2 = 0
-S3 = 0
-S4 = 0
-Jc = 4
-Jmin = 40
-Jmax = 70
-H1 = 1
-H2 = 2
-H3 = 3
-H4 = 4
-I1 = {somethinghere}
-I2 = {somethinghere}
-
-[Peer]
-PublicKey = {somethinghere}
-AllowedIPs = 0.0.0.0/0
-Endpoint = engage.cloudflareclient.com:880
-PersistentKeepalive = 25
+wg://162.159.192.1:500?private_key=key&peer_public_key=pubkey&pre_shared_key=&reserved=112-103-154&persistent_keepalive=0&mtu=1280&use_system_interface=false&local_address=172.16.0.2/32-2606:4700:110:8f05:fa00:8aff:48e2:9b49/128&workers=0&enable_amnezia=true&junk_packet_count=4&junk_packet_min_size=40&junk_packet_max_size=70&init_packet_junk_size=0&response_packet_junk_size=0&init_packet_magic_header=1&response_packet_magic_header=2&underload_packet_magic_header=3&transport_packet_magic_header=4#WARP
 ```
 
 **Параметры:**
