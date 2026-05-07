@@ -5,7 +5,7 @@ set -e
 INSTALL_DIR="/opt/sing-box-warp"
 CONFIG_DIR="/etc/sing-box-warp"
 CACHE_DIR="/var/cache/sing-box-warp"
-SING_BOX_VERSION="1.12.12-extended-1.5.1"
+SING_BOX_VERSION="1.13.2-extended-1.6.2"
 SING_BOX_URL="https://github.com/shtorm-7/sing-box-extended/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
 
 echo "=== Sing-Box WARP Quick Installer ==="
