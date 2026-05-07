@@ -10,6 +10,19 @@ get_config_value() {
     grep "^${key}" "$file" | head -1 | sed "s/^${key}[[:space:]]*=[[:space:]]*//" | tr -d '\r'
 }
 
+ensure_prefix() {
+    local addr="$1"
+    local default_prefix="$2"
+    if [ -z "$addr" ]; then
+        echo ""
+        return 0
+    fi
+    case "$addr" in
+        */*) echo "$addr" ;;
+        *) echo "${addr}${default_prefix}" ;;
+    esac
+}
+
 # Parse warp.conf
 parse_warp_conf() {
     # Check if it's old wg:// URL format
@@ -58,6 +71,9 @@ parse_warp_conf() {
     # Parse address - может быть несколько через запятую, берем первый IPv4
     IPV4=$(echo "$ADDRESS" | tr ',' '\n' | grep -v ':' | head -1 | tr -d ' ')
     IPV6=$(echo "$ADDRESS" | tr ',' '\n' | grep ':' | head -1 | tr -d ' ')
+
+    IPV4=$(ensure_prefix "$IPV4" "/32")
+    IPV6=$(ensure_prefix "$IPV6" "/128")
     
     # Если IPv6 не найден, генерируем дефолтный
     if [ -z "$IPV6" ]; then
