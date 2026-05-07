@@ -246,7 +246,7 @@ parse_from_ini() {
     fi
 
     TAG="wireguard-out"
-    LOG_LEVEL="debug"
+    LOG_LEVEL="error"
 }
 
 write_config() {
