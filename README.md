@@ -1,3 +1,6 @@
+Repo archived: new versions here https://ghettoloader.duckdns.org/hesoyam/sing-warp-socks5
+
+
 # Sing-Box WARP Project
 > Author remark:
 > вы спросите - нахуя такие сложности? А потому что нативный warp не поддерживает amneziaWG ключи для обфускации WireGuard. А ебаться в саму амнезию нет желания. К тому же sing-box сразу может поднять локальный сокс что упрощает просовывание этого варпа во всякого рода панели.
