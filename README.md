@@ -41,7 +41,7 @@
 Сгенерируйте конфиг на https://warp-generation.github.io (https://t.me/warp_generator_bot) (AWG 2.0 - 3 вариант, если не заработает переустановите с 2 вариант), затем:
 
 ```none
-curl -fsSL https://gitea.digitalforest.my/hesoyam/sing-warp-socks5/raw/branch/main/quick-install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/quick-install.sh | sudo bash
 ```
 
 Скрипт последовательно спросит про WARP и про Proton — можно добавить оба, только один или,
