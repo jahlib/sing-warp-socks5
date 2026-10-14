@@ -7,7 +7,7 @@ CONFIG_DIR="/etc/sing-box-warp"
 CACHE_DIR="/var/cache/sing-box-warp"
 SERVICE_NAME="sing-box-warp"
 SING_BOX_VERSION="1.13.2-extended-1.6.2"
-SING_BOX_URL="https://gitea.digitalforest.my/hesoyam/sing-box-extended-mirror/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
+SING_BOX_URL="https://github.com/shtorm-7/sing-box-extended/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz"
 REINSTALL=0
 
 is_existing_install() {
@@ -352,7 +352,7 @@ if [ "$NEED_DOWNLOAD" -eq 1 ]; then
     rm -rf "$TARBALL" "sing-box-${SING_BOX_VERSION}-linux-amd64"
 fi
 
-GENERATE_CONFIG_URL="https://gitea.digitalforest.my/hesoyam/sing-warp-socks5/raw/branch/main/generate-config.sh"
+GENERATE_CONFIG_URL="https://raw.githubusercontent.com/jahlib/sing-warp-socks5/refs/heads/master/generate-config.sh"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Installing generate-config.sh..."
@@ -418,7 +418,7 @@ fi
 sysctl -p /etc/sysctl.d/99-sing-box-warp.conf
 
 if [ "$ENABLE_TUN" = "1" ]; then
-    RULES_BASE="https://gitea.digitalforest.my/hesoyam/srs-komplekt/raw/branch/main"
+    RULES_BASE="https://github.com/jahlib/srs-komplekt-alluneed/raw/refs/heads/main/"
     echo "Downloading routing rule sets..."
     rm -rf "$INSTALL_DIR/rules"
     mkdir -p "$INSTALL_DIR/rules"
