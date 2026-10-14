@@ -1,0 +1,15 @@
+[Interface]
+# Bouncing = 1
+# NAT-PMP (Port Forwarding) = off
+# VPN Accelerator = on
+PrivateKey = {privkey}
+Address = 10.2.0.2/32
+DNS = 10.2.0.1
+
+[Peer]
+# SG-FREE#4
+PublicKey = {pubkey}
+AllowedIPs = 0.0.0.0/0, ::/0
+Endpoint = 123.123.123.123:51820
+
+PersistentKeepalive = 25
